@@ -24,7 +24,7 @@ function allItems() {
         if (error) throw error;
         console.log('Checkout our list of products for sale ',results, "\n");
         console.log(" END of the products ------------------------------------------------------------------------->\n")
-        askClient();
+        askClientId(results);
     })
     
 }
@@ -32,55 +32,84 @@ function allItems() {
 // //The app should then prompt users with two messages.
 
 // The first should ask them the ID of the product they would like to buy.
-// The second message should ask how many units of the product they would like to buy.
-
-var askClient = function () {
+function askClientId () {
     inquirer.prompt([
 
         {
-            type: "input",
-            name: "iterm_id",
+           type: "input",
+            name: "item_id",
             message: "Please provide the ID number of the product you would like to purchase today.",
-            validate: function (value) {
-                if(isNaN(value)==false){
+            validate: function (answer) {
+                if(isNaN(answer)==false){
                     return true
                     
                 }else{
-                    console.log("\n"+ value + " is not a valid number. Please enter a valid ID number");
+                    console.log("\n"+ answer + " is not a valid number. Please enter a valid ID number");
                     return false
-                    
                 }
-                
+             
             }
-        },
-
-        {
-            type: "input",
-            name: "units_tobuy",
-            message: "How many units of the product you would like to buy.",
-            validate: function (value) {
-                if(isNaN(value)==false){
-                    return true
-                    
-                }else{
-                    console.log( "\n"+ value + " is not a valit unit number. Please enter a number");
-                    return false
-                    
-                }
-                
-            }
-        }
+        },  
     ]).then(function (answer) {
-        console.log(answer)
+        var product = answer.item_id;
+        if(product){
+            howManyUnits(product);
+        } else{
+            console.log("\nThat item is not in the inventory.");
+            allItems();
+        }
         
     });
 }
 
-var placeOrder = function(id, units_tobuy) {
+
+// The second message should ask how many units of the product they would like to buy.
+
+function howManyUnits(product) {
+    inquirer.prompt([
+    {
+    type: "input",
+    name: "units_tobuy",
+    message: "How many products you would like to buy.",
+    validate: function (ans) {
+        if(isNaN(ans)==false){
+            return true
+            
+        }else{
+            console.log( "\n"+ ans + " is not a valit unit number. Please enter a number");
+            return false   
+        } 
+    }
+}
+
+//Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
+]).then(function (ans) {
+    var units = parseInt(ans.units);
+// If not, the app should log a phrase like Insufficient quantity!, and then prevent the order from going through.
+    if (units >product.stock_quantity){
+        console.log ("Sorry! product not available in stock")
+        // allItems();
+    } else{
+        makePurchase(product, units);
+    }
+    
+});
     
 }
 
+// However, if your store does have enough of the product, you should fulfill the customer's order.
 
+function makePurchase(product, units) {
+    connection.query(
+        "UPDATE products SET stock_quantity = stock_quantity - ? WHERE item_id =?",
+        [units.units_tobuy, product.item_id], function (error, res) {
+            console.log("Purchased has been processed " + JSON.stringify(res)+ "\n");
+            // //I'm stuck in trying to udpdate the database. Using JSON.stringify(res) to see the result. The row's aren't updated after runing the makePurchase function
 
+            console.log ("BUY MORE!!!!\n")
+            allItems();
+        }
+    )
+    
+}
 
-// connection.end();
